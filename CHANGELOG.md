@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `run_vol_forecast` — the public, import-pure horse-race entrypoint the CLI and
+  the FastAPI route both call. It accepts an OHLC frame (or a close-price series),
+  runs the leakage-guarded walk-forward (GARCH/EGARCH/HAR-RV/EWMA/XGBoost/RW),
+  scores OOS QLIKE/MSE, runs Hansen-SPA + pairwise Diebold-Mariano against the
+  best GARCH/HAR-RV reference, and returns the pure `best_model` /
+  `ml_beats_garch` verdict (`VolForecastSummary`/`VolForecastRun`). The
+  research-only LSTM is never reachable from it, so the serve path never imports
+  TensorFlow.
+- `build_vol_forecast_figures` — assembles the `forecast_figure` (RV actual vs
+  model forecasts) and `error_figure` (OOS QLIKE by model) as plain JSON dicts.
+
+### Changed
+
+- Implemented every previously-stubbed kernel (realized-vol estimators, HAR
+  features, GARCH family + hand-rolled parity oracle, XGBoost, baselines,
+  QLIKE/MSE, DM/SPA/HAC, the pure verdict, the vol-targeting overlay, and the
+  fit-on-train-only walk-forward engine) and wired them into one coherent library.
+- `cli.run` now delegates to `run_vol_forecast` so the CLI and the API share a
+  single pipeline.
+- `vol_target_overlay` is now implemented (vol-targeted position sizing with a
+  per-side bps cost and an honest Deflated-Sharpe deflation by the true
+  `n_trials`).
+- The walk-forward suite pins BLAS/OpenMP/XGBoost to a single thread (via
+  `conftest`) for reproducibility and speed; replaced the stale stub-contract and
+  `xfail` scaffold tests with behavioural unit/integration/regression tests
+  (including the honest-null guarantee on `garch_series`).
+
 ## [0.1.0] - 2026-06-17
 
 ### Added

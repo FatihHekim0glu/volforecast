@@ -14,17 +14,18 @@ The truth table is unit-tested. Importing this module has no side effects.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
+
+from volforecast._exceptions import ValidationError
 
 #: Model labels classified as "ML" (the challengers).
 ML_MODELS: frozenset[str] = frozenset({"xgboost", "lstm"})
 
 #: Model labels classified as the GARCH/HAR-RV references (the bars to beat).
-REFERENCE_MODELS: frozenset[str] = frozenset(
-    {"garch", "egarch", "gjr", "har_rv", "ewma", "rw"}
-)
+REFERENCE_MODELS: frozenset[str] = frozenset({"garch", "egarch", "gjr", "har_rv", "ewma", "rw"})
 
 
 class BestModelClass(StrEnum):
@@ -135,4 +136,51 @@ def derive_verdict(
         p-value is outside ``[0, 1]``, or ``best_model`` is an ML model but its
         DM p-value is missing from ``dm_pvalues_vs_best``.
     """
-    raise NotImplementedError
+    if not qlike_by_model:
+        raise ValidationError("qlike_by_model must be non-empty.")
+    for label, value in qlike_by_model.items():
+        if not math.isfinite(value):
+            raise ValidationError(f"qlike_by_model[{label!r}] is not finite ({value}).")
+    if not 0.0 <= spa_pvalue <= 1.0:
+        raise ValidationError(f"spa_pvalue must be in [0, 1], got {spa_pvalue}.")
+    for label, pval in dm_pvalues_vs_best.items():
+        if not 0.0 <= pval <= 1.0:
+            raise ValidationError(f"dm_pvalues_vs_best[{label!r}] must be in [0, 1], got {pval}.")
+
+    # 1) best_model = strict argmin of QLIKE, with ties broken conservatively in
+    #    favour of the REFERENCE family (the honest, anti-snooping tie-break).
+    min_qlike = min(qlike_by_model.values())
+    tied = [m for m, q in qlike_by_model.items() if q == min_qlike]
+    reference_tied = [m for m in tied if m in REFERENCE_MODELS]
+    # Deterministic tie-break: prefer a reference; otherwise the first inserted.
+    best_model = reference_tied[0] if reference_tied else tied[0]
+
+    best_is_ml = best_model in ML_MODELS
+
+    # 2) ml_beats_garch: only if best_model is ML AND both the SPA composite null
+    #    is rejected AND the pairwise DM gate vs the best reference is significant.
+    dm_pvalue_vs_best_reference: float | None = None
+    if best_is_ml:
+        if best_model not in dm_pvalues_vs_best:
+            raise ValidationError(
+                f"best_model {best_model!r} is an ML model but its DM p-value is "
+                "missing from dm_pvalues_vs_best."
+            )
+        dm_pvalue_vs_best_reference = float(dm_pvalues_vs_best[best_model])
+
+    ml_beats_garch = bool(
+        best_is_ml
+        and spa_pvalue < alpha
+        and dm_pvalue_vs_best_reference is not None
+        and dm_pvalue_vs_best_reference < alpha
+    )
+
+    best_model_class = BestModelClass.ML if best_is_ml else BestModelClass.REFERENCE
+
+    return Verdict(
+        best_model=best_model,
+        best_model_class=best_model_class,
+        ml_beats_garch=ml_beats_garch,
+        spa_pvalue=float(spa_pvalue),
+        dm_pvalue_vs_best_reference=dm_pvalue_vs_best_reference,
+    )

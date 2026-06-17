@@ -15,6 +15,38 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
+from volforecast._constants import EPS
+from volforecast._exceptions import ValidationError
+
+
+def _coerce_pair(
+    realized_var: pd.Series | NDArray[np.float64],
+    forecast_var: pd.Series | NDArray[np.float64],
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Coerce two loss inputs to aligned 1-D float arrays of equal length.
+
+    Both inputs are flattened to ``float64`` arrays. If either is a
+    :class:`pandas.Series` it is converted via its values (the caller is
+    responsible for index alignment upstream). Raises :class:`ValidationError`
+    if the lengths differ.
+    """
+    a = np.asarray(
+        realized_var.to_numpy() if isinstance(realized_var, pd.Series) else realized_var,
+        dtype="float64",
+    ).ravel()
+    b = np.asarray(
+        forecast_var.to_numpy() if isinstance(forecast_var, pd.Series) else forecast_var,
+        dtype="float64",
+    ).ravel()
+    if a.shape[0] != b.shape[0]:
+        raise ValidationError(
+            f"realized_var and forecast_var must have equal length, got "
+            f"{a.shape[0]} and {b.shape[0]}."
+        )
+    if a.shape[0] == 0:
+        raise ValidationError("realized_var and forecast_var must be non-empty.")
+    return a, b
+
 
 def qlike_loss_series(
     realized_var: pd.Series | NDArray[np.float64],
@@ -48,7 +80,17 @@ def qlike_loss_series(
     ValidationError
         If lengths differ, or any variance is non-positive after the EPS floor.
     """
-    raise NotImplementedError
+    realized, forecast = _coerce_pair(realized_var, forecast_var)
+    # Floor both variances at EPS so the ratio and its log are well-defined even
+    # if a kernel emits a tiny non-positive variance. A negative input is a hard
+    # error (it cannot be a variance); a zero is floored to EPS.
+    if bool(np.any(realized < 0.0)) or bool(np.any(forecast < 0.0)):
+        raise ValidationError("QLIKE requires non-negative variances (got a negative value).")
+    realized = np.maximum(realized, EPS)
+    forecast = np.maximum(forecast, EPS)
+    ratio = realized / forecast
+    loss: NDArray[np.float64] = ratio - np.log(ratio) - 1.0
+    return loss
 
 
 def qlike(
@@ -72,7 +114,8 @@ def qlike(
     ValidationError
         If lengths differ or variances are non-positive.
     """
-    raise NotImplementedError
+    loss = qlike_loss_series(realized_var, forecast_var)
+    return float(np.nanmean(loss))
 
 
 def mse(
@@ -102,4 +145,6 @@ def mse(
     ValidationError
         If lengths differ.
     """
-    raise NotImplementedError
+    realized, forecast = _coerce_pair(realized_var, forecast_var)
+    diff = realized - forecast
+    return float(np.nanmean(diff * diff))

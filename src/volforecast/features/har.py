@@ -18,6 +18,18 @@ from typing import Any
 
 import pandas as pd
 
+from volforecast._constants import (
+    HAR_DAILY_WINDOW,
+    HAR_MONTHLY_WINDOW,
+    HAR_WEEKLY_WINDOW,
+)
+from volforecast._exceptions import ValidationError
+from volforecast._validation import ensure_series
+
+#: The ordered HAR component columns produced by :func:`har_components`. This is
+#: the input contract shared by the HAR-RV baseline and the XGBoost model.
+HAR_COMPONENT_COLUMNS: tuple[str, ...] = ("rv_daily", "rv_weekly", "rv_monthly")
+
 
 @dataclass(frozen=True, slots=True)
 class HARFeatures:
@@ -95,7 +107,27 @@ def har_components(rv: pd.Series) -> pd.DataFrame:
     ValidationError
         If ``rv`` is empty.
     """
-    raise NotImplementedError
+    series = ensure_series(rv, name="rv", allow_nan=True)
+
+    # Trailing averages of PAST RV. ``min_periods`` equals the window so a
+    # component is NaN until its full warm-up has accrued — no partial windows
+    # leak a short-sample bias into early rows.
+    daily = series.rolling(HAR_DAILY_WINDOW, min_periods=HAR_DAILY_WINDOW).mean()
+    weekly = series.rolling(HAR_WEEKLY_WINDOW, min_periods=HAR_WEEKLY_WINDOW).mean()
+    monthly = series.rolling(HAR_MONTHLY_WINDOW, min_periods=HAR_MONTHLY_WINDOW).mean()
+
+    # ``.shift(1)`` is the leakage guard: the row at ``t`` carries the trailing
+    # average computed up to and including ``t - 1`` only, so a HAR feature at
+    # ``t`` never embeds ``RV_t`` (which lives in ``t``'s forward target window).
+    frame = pd.DataFrame(
+        {
+            "rv_daily": daily.shift(1),
+            "rv_weekly": weekly.shift(1),
+            "rv_monthly": monthly.shift(1),
+        },
+        index=series.index,
+    )
+    return frame[list(HAR_COMPONENT_COLUMNS)]
 
 
 def build_har_features(
@@ -131,4 +163,38 @@ def build_har_features(
     ValidationError
         If ``rv``/``target`` cannot be aligned or the joined frame is empty.
     """
-    raise NotImplementedError
+    components = har_components(rv)
+    target_series = ensure_series(target, name="target", allow_nan=True)
+    target_series = target_series.rename("rv_target")
+
+    frame = components
+    if exog is not None:
+        if not isinstance(exog, pd.DataFrame):
+            raise ValidationError("exog must be a pandas.DataFrame when provided.")
+        if exog.shape[1] == 0:
+            raise ValidationError("exog must have at least one column when provided.")
+        overlap = set(frame.columns) & set(exog.columns)
+        if overlap:
+            raise ValidationError(f"exog columns collide with HAR components: {sorted(overlap)}.")
+        # Caller-lagged exogenous features (e.g. a VIX level) are joined by index;
+        # this function does NOT re-lag them.
+        frame = frame.join(exog.astype("float64"), how="left")
+
+    feature_names = tuple(str(c) for c in frame.columns)
+
+    # Inner-join features and target on their common index, then drop any row
+    # with a NaN so the surviving feature/target pair is complete AND disjoint in
+    # time (features at {<= t}, target at {> t + gap}).
+    joined = frame.join(target_series, how="inner").dropna(axis=0, how="any")
+    if joined.empty:
+        raise ValidationError(
+            "build_har_features: no complete feature/target rows after alignment."
+        )
+
+    features_out = joined[list(feature_names)].astype("float64")
+    target_out = joined["rv_target"].astype("float64")
+    return HARFeatures(
+        features=features_out,
+        target=target_out,
+        feature_names=feature_names,
+    )

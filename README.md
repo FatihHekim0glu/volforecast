@@ -44,10 +44,16 @@ uv run volforecast run SPY --horizon 5
 import volforecast as vf
 
 ohlc = vf.generate_garch_ohlc(n_obs=1500, seed=7)          # synthetic, seeded
-config = vf.WalkForwardConfig(horizon=5)                    # fit-on-train-only
-result = vf.run_walk_forward(ohlc, config=config)           # GARCH/HAR/XGB/...
-verdict = vf.derive_verdict(...)                            # pure, honest verdict
+run = vf.run_vol_forecast(ohlc, horizon=5)                  # the public entrypoint
+print(run.summary.best_model, run.summary.ml_beats_garch)   # honest verdict
+figs = vf.build_vol_forecast_figures(run)                   # {forecast,error}_figure
 ```
+
+`run_vol_forecast` is the single, import-pure entrypoint the CLI and the FastAPI
+route both call: it runs the leakage-guarded walk-forward (GARCH/EGARCH/HAR-RV/
+EWMA/XGBoost/RW), scores OOS QLIKE/MSE, runs Hansen-SPA + Diebold-Mariano, and
+returns the pure `best_model` / `ml_beats_garch` verdict. The research-only LSTM
+is never reachable from it, so the serve path can never import TensorFlow.
 
 `import volforecast` pulls in **no** `arch` / `xgboost` / TensorFlow — every
 heavy fitter is imported lazily inside its function, and the package is
@@ -74,14 +80,13 @@ import-pure.
 
 | Check | Reference | Status |
 | --- | --- | --- |
-| GARCH(1,1) log-likelihood vs `arch` | hand-rolled oracle, tol 1e-6 | _pending impl_ |
-| QLIKE / Diebold-Mariano | reference values | _pending impl_ |
-| XGBoost determinism (fixed seed) | byte-identical predictions | _pending impl_ |
-| Forward-target disjointness | feature index ⊆ {≤ t}, target ⊂ {> t+gap} | _pending impl_ |
-| Future-perturbation invariance | property test | _pending impl_ |
-| Golden best-model on synthetic GARCH | honest null (ML does not beat GARCH) | _pending impl_ |
-
-_(This is a scaffold: the table is populated as the kernels land.)_
+| GARCH(1,1) log-likelihood vs `arch` | hand-rolled oracle, tol 1e-6 | ✅ `tests/parity` |
+| QLIKE / Diebold-Mariano | SciPy Student-t reference | ✅ `tests/unit` |
+| XGBoost determinism (fixed seed) | byte-identical predictions | ✅ `tests/parity` |
+| Forward-target disjointness | feature index ⊆ {≤ t}, target ⊂ {> t+gap} | ✅ `tests/property` |
+| Future-perturbation invariance | property test | ✅ `tests/property` |
+| Fit-on-train-only (GARCH/XGB) | future-perturbation leaves train folds intact | ✅ `tests/property` |
+| Golden best-model on synthetic GARCH | honest null (ML does not beat GARCH) | ✅ `tests/integration` |
 
 ## Limitations
 

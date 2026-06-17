@@ -85,6 +85,12 @@ from volforecast.garch.models import (
     garch_11_log_likelihood,
 )
 from volforecast.ml.xgb import XGBForecaster, fit_xgb
+from volforecast.pipeline import (
+    VolForecastRun,
+    VolForecastSummary,
+    build_vol_forecast_figures,
+    run_vol_forecast,
+)
 from volforecast.plots import qlike_bar_figure, rv_forecast_figure
 from volforecast.realized.estimators import (
     close_to_close_rv,
@@ -160,6 +166,11 @@ __all__ = [
     "WalkForwardConfig",
     "WalkForwardResult",
     "run_walk_forward",
+    # public horse-race entrypoint (serve path; NO LSTM/TF)
+    "VolForecastRun",
+    "VolForecastSummary",
+    "build_vol_forecast_figures",
+    "run_vol_forecast",
     # evaluation
     "BestModelClass",
     "DMResult",

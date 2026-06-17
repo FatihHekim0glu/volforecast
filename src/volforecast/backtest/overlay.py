@@ -127,4 +127,121 @@ def vol_target_overlay(
         If inputs are misaligned, ``target_vol <= 0``, ``max_leverage < 0``,
         ``cost_bps < 0``, or ``n_trials < 1``.
     """
-    raise NotImplementedError
+    from volforecast._exceptions import ValidationError
+    from volforecast._validation import ensure_series
+    from volforecast.evaluation.dsr import deflated_sharpe_ratio
+
+    if not (np.isfinite(target_vol) and target_vol > 0.0):
+        raise ValidationError(f"target_vol must be a positive finite float, got {target_vol!r}.")
+    if not (np.isfinite(max_leverage) and max_leverage >= 0.0):
+        raise ValidationError(
+            f"max_leverage must be a non-negative finite float, got {max_leverage!r}."
+        )
+    if not (np.isfinite(cost_bps) and cost_bps >= 0.0):
+        raise ValidationError(f"cost_bps must be a non-negative finite float, got {cost_bps!r}.")
+    if n_trials < 1:
+        raise ValidationError(f"n_trials must be >= 1, got {n_trials}.")
+
+    ret = ensure_series(returns, name="returns", allow_nan=True)
+    fc = ensure_series(vol_forecast, name="vol_forecast", allow_nan=True)
+
+    # Inner-align on the common index then drop any row with a NaN in either leg
+    # so the overlay only ever sizes positions it can actually take.
+    joined = pd.concat([ret.rename("ret"), fc.rename("fc")], axis=1).dropna(axis=0, how="any")
+    if joined.shape[0] < 2:
+        raise ValidationError("vol_target_overlay needs at least two aligned observations.")
+
+    underlying = joined["ret"].to_numpy(dtype="float64")
+    forecast = joined["fc"].to_numpy(dtype="float64")
+    index = joined.index
+
+    # Position sizing: target_vol / forecast_vol, floored at 0 and capped at the
+    # leverage limit. A non-positive/zero forecast cannot size a position, so it
+    # maps to zero exposure rather than an infinite one.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        raw = np.where(forecast > 0.0, target_vol / forecast, 0.0)
+    weight = np.clip(np.nan_to_num(raw, nan=0.0, posinf=0.0), 0.0, float(max_leverage))
+
+    # NO-LOOKAHEAD: the forecast/position formed at ``t`` is applied to the NEXT
+    # day's return, so we shift the weight forward by one before multiplying.
+    applied = np.empty_like(weight)
+    applied[0] = 0.0
+    applied[1:] = weight[:-1]
+    gross = applied * underlying
+
+    # Per-side transaction cost on the change in exposure (the first day pays the
+    # cost of opening ``weight[0]``).
+    turnover_path = np.empty_like(weight)
+    turnover_path[0] = abs(weight[0])
+    turnover_path[1:] = np.abs(np.diff(weight))
+    cost = (float(cost_bps) / 1.0e4) * turnover_path
+    net = gross - cost
+
+    net_returns = pd.Series(net, index=index, name="net_returns", dtype="float64")
+    gross_returns = pd.Series(gross, index=index, name="gross_returns", dtype="float64")
+    exposure = pd.Series(weight, index=index, name="exposure", dtype="float64")
+
+    sharpe = _annualized_sharpe(net)
+    turnover = float(np.mean(turnover_path))
+
+    # Per-observation Sharpe for the Deflated Sharpe (the DSR works in
+    # per-observation units, undoing the sqrt(252) annualization).
+    per_obs_sharpe = sharpe / np.sqrt(_ANNUALIZATION)
+    n_obs = int(net.shape[0])
+    skew, kurt = _sample_skew_kurtosis(net)
+    # With a single configuration the variance of trial Sharpes is unknown; use a
+    # conservative unit variance so the multiplicity benchmark is non-trivial when
+    # ``n_trials > 1`` (the honest deflation), collapsing to the plain PSR at N=1.
+    deflated = deflated_sharpe_ratio(
+        per_obs_sharpe,
+        n_obs=n_obs,
+        n_trials=int(n_trials),
+        variance_of_trial_sharpes=1.0,
+        skew=skew,
+        kurtosis=kurt,
+    )
+
+    return OverlayResult(
+        net_returns=net_returns,
+        gross_returns=gross_returns,
+        exposure=exposure,
+        sharpe=float(sharpe),
+        deflated_sharpe=float(deflated),
+        turnover=turnover,
+        n_trials=int(n_trials),
+        meta={
+            "target_vol": float(target_vol),
+            "max_leverage": float(max_leverage),
+            "cost_bps": float(cost_bps),
+            "n_obs": n_obs,
+        },
+    )
+
+
+#: Trading days per year used to annualize the overlay Sharpe ratio.
+_ANNUALIZATION: float = 252.0
+
+
+def _annualized_sharpe(net: np.ndarray) -> float:
+    """Annualized Sharpe of a daily net-return array (``0`` when degenerate)."""
+    arr = np.asarray(net, dtype="float64")
+    sd = float(np.std(arr, ddof=1)) if arr.shape[0] > 1 else 0.0
+    if sd <= 0.0:
+        return 0.0
+    return float(np.mean(arr) / sd * np.sqrt(_ANNUALIZATION))
+
+
+def _sample_skew_kurtosis(net: np.ndarray) -> tuple[float, float]:
+    """Sample skewness and FULL (non-excess) kurtosis of a return array.
+
+    Returns ``(0.0, 3.0)`` (the Gaussian defaults) for a degenerate series so the
+    PSR variance term stays well-defined.
+    """
+    arr = np.asarray(net, dtype="float64")
+    sd = float(np.std(arr, ddof=0))
+    if arr.shape[0] < 2 or sd <= 0.0:
+        return 0.0, 3.0
+    centred = arr - float(np.mean(arr))
+    skew = float(np.mean(centred**3) / sd**3)
+    kurt = float(np.mean(centred**4) / sd**4)
+    return skew, kurt

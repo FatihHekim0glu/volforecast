@@ -19,11 +19,28 @@ Importing this module has no side effects beyond fixture registration.
 
 from __future__ import annotations
 
-import numpy as np
-import pandas as pd
-import pytest
+import os
 
-from volforecast._rng import make_rng
+# Pin BLAS / OpenMP / XGBoost thread pools to a single thread BEFORE numpy (and,
+# transitively, arch/scipy/xgboost) import. The per-fold GARCH/XGBoost fits in
+# the walk-forward suite otherwise oversubscribe every core (hundreds of % CPU)
+# and run far slower than a single-threaded fit on these short folds — pinning
+# here keeps the suite both fast and bit-reproducible.
+for _var in (
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS",
+    "XGBOOST_NTHREAD",
+):
+    os.environ.setdefault(_var, "1")
+
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+import pytest  # noqa: E402
+
+from volforecast._rng import make_rng  # noqa: E402
 
 _SEED = 20260617
 

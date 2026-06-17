@@ -87,9 +87,7 @@ def test_fixed_bps_cost_rejects_negative() -> None:
 def test_psr_and_dsr_are_probabilities() -> None:
     psr = probabilistic_sharpe_ratio(0.1, n_obs=250)
     assert 0.0 <= psr <= 1.0
-    dsr = deflated_sharpe_ratio(
-        0.1, n_obs=250, n_trials=10, variance_of_trial_sharpes=0.01
-    )
+    dsr = deflated_sharpe_ratio(0.1, n_obs=250, n_trials=10, variance_of_trial_sharpes=0.01)
     assert 0.0 <= dsr <= 1.0
 
 
