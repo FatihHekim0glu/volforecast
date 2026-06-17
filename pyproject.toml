@@ -1,0 +1,201 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "volforecast"
+version = "0.1.0"
+description = "GARCH vs ML for realized-volatility forecasting: honestly test whether XGBoost/LSTM beat a well-specified GARCH(1,1)/HAR-RV out-of-sample (QLIKE + Diebold-Mariano + Hansen SPA). Spoiler (Hansen-Lunde 2005): GARCH is hard to beat."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "FatihHekim0glu" }]
+keywords = [
+    "volatility-forecasting",
+    "garch",
+    "har-rv",
+    "realized-volatility",
+    "xgboost",
+    "quantitative-finance",
+    "diebold-mariano",
+    "hansen-spa",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
+]
+# The pure compute kernels depend only on the numeric stack; the heavy fitters
+# (arch, xgboost) live in the `data` extra and are imported lazily.
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "scipy>=1.11",
+    "statsmodels>=0.14",
+]
+
+[project.urls]
+Homepage = "https://fatihhekimoglu.com"
+Repository = "https://github.com/FatihHekim0glu/volforecast"
+Changelog = "https://github.com/FatihHekim0glu/volforecast/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+# Lean serve-path stack: GARCH (arch) + XGBoost ONLY. NO TensorFlow.
+# This is exactly what the FastAPI container installs.
+data = [
+    "arch>=6",
+    "xgboost>=2.0",
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "scipy>=1.11",
+    "statsmodels>=0.14",
+    "pyarrow>=15.0",
+    "diskcache>=5.6",
+]
+# Plotly figure builders (figures serialize to {data, layout} JSON).
+viz = [
+    "plotly>=5.20",
+    "kaleido>=0.2.1",
+]
+# RESEARCH-ONLY: the LSTM arm. TensorFlow is NOT vendored into the serve
+# container and is never imported on the serve path.
+research = [
+    "tensorflow>=2.16",
+]
+# Developer + parity-oracle + lint/type/test stack.
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.100",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pandas-stubs>=2.0",
+    "typer>=0.12",
+]
+
+[project.scripts]
+volforecast = "volforecast.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/volforecast"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/volforecast",
+    "tests",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+]
+
+# --------------------------------------------------------------------------- #
+# Ruff                                                                        #
+# --------------------------------------------------------------------------- #
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+    "NPY",  # numpy-specific
+    "PD",   # pandas-vet
+]
+ignore = [
+    "E501",    # line length handled by formatter
+    "RUF022",  # keep `__all__` grouped-by-section (readable) rather than isort-sorted
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["N802", "N803", "N806"]  # math-style names (T, h, RV) in tests
+
+[tool.ruff.lint.pep8-naming]
+# Math-style single-capital / short names (horizon h, sample size T) are intentional.
+extend-ignore-names = ["T", "h", "L", "RV"]
+
+# --------------------------------------------------------------------------- #
+# mypy (strict)                                                               #
+# --------------------------------------------------------------------------- #
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+show_error_codes = true
+files = ["src/volforecast"]
+
+# Documented pandas override: pandas-stubs is incomplete for some DataFrame
+# operations; we accept untyped pandas internals at the boundary while keeping
+# our own signatures strictly typed. (House convention: curated pandas suppression.)
+[[tool.mypy.overrides]]
+module = ["pandas.*"]
+follow_imports = "skip"
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+    "scipy.*",
+    "statsmodels.*",
+    "arch.*",
+    "xgboost.*",
+    "tensorflow.*",
+    "diskcache.*",
+    "plotly.*",
+    "typer.*",
+    "httpx.*",
+]
+ignore_missing_imports = true
+
+# --------------------------------------------------------------------------- #
+# pytest                                                                       #
+# --------------------------------------------------------------------------- #
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "unit: fast isolated unit tests",
+    "property: Hypothesis property-based invariant tests",
+    "parity: validation against an independent reference implementation",
+    "regression: pinned-snapshot / locked-behaviour tests",
+    "integration: end-to-end pipeline tests (may touch data/network)",
+    "research: research-only paths (LSTM/TensorFlow); excluded from the serve container",
+    "slow: long-running tests",
+]
+
+# --------------------------------------------------------------------------- #
+# Coverage                                                                     #
+# --------------------------------------------------------------------------- #
+[tool.coverage.run]
+branch = true
+source = ["volforecast"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "@overload",
+]

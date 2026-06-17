@@ -1,0 +1,1 @@
+"""property tests for volforecast."""
