@@ -22,6 +22,29 @@ QLIKE plus DM/SPA significance — never a narrative choice. `ml_beats_garch` is
 `True` only when an ML model has the strictly lowest QLIKE **and** beats the best
 GARCH/HAR-RV reference by an SPA- and DM-significant margin.
 
+## Results on the synthetic default
+
+These are the **actual** numbers from the shipped key-free default — a seeded
+GARCH(1,1)-like OHLC series (`generate_garch_ohlc(n_obs=1500, seed=7)`),
+Garman-Klass RV, anchored walk-forward (`train_window=504`, `gap=1`). Reproduce
+them with the [Reproduce](#reproduce) block; OOS **QLIKE** (lower is better):
+
+| horizon | garch | egarch | har_rv | ewma | xgboost | rw | best_model | ML beats GARCH? | SPA *p* |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: |
+| **h=1**  | 1.798 | 1.811 | **0.529** | 1.677 | 0.565 | 1.905 | `har_rv` | **NO** | 0.503 |
+| **h=5**  | 0.171 | **0.168** | 0.178 | 0.198 | 0.197 | 1.820 | `egarch` | **NO** | 0.897 |
+| **h=22** | 0.931 | 0.940 | **0.200** | 1.002 | 0.213 | 2.083 | `har_rv` | **NO** | 0.884 |
+
+Read this honestly. A **GARCH/HAR-RV reference wins at every horizon**, never the
+ML arm, so `ml_beats_garch=False` throughout and `n_effective_trials=6`. XGBoost
+is *competitive* — a close second at h=1 (0.565 vs 0.529) and h=22 (0.213 vs
+0.200) — which is exactly the "marginal, if at all" ML story. At h=1 its pairwise
+Diebold-Mariano *p* against the best reference is 0.015, yet it is **not** crowned
+the winner: it does not have the lowest QLIKE *and* the Hansen-SPA composite null
+(*p*=0.50) is not rejected. The SPA gate (which controls the snooping across all
+six configs) is the discipline that keeps a lucky pairwise margin from minting a
+false "ML wins". This is Hansen & Lunde (2005) reproduced by construction.
+
 ## Install
 
 ```bash
@@ -78,15 +101,50 @@ import-pure.
 
 ## Validation
 
-| Check | Reference | Status |
-| --- | --- | --- |
-| GARCH(1,1) log-likelihood vs `arch` | hand-rolled oracle, tol 1e-6 | ✅ `tests/parity` |
-| QLIKE / Diebold-Mariano | SciPy Student-t reference | ✅ `tests/unit` |
-| XGBoost determinism (fixed seed) | byte-identical predictions | ✅ `tests/parity` |
-| Forward-target disjointness | feature index ⊆ {≤ t}, target ⊂ {> t+gap} | ✅ `tests/property` |
-| Future-perturbation invariance | property test | ✅ `tests/property` |
-| Fit-on-train-only (GARCH/XGB) | future-perturbation leaves train folds intact | ✅ `tests/property` |
-| Golden best-model on synthetic GARCH | honest null (ML does not beat GARCH) | ✅ `tests/integration` |
+The compute core is validated oracle → test: each numeric claim is pinned to an
+**independent reference** at a fixed tolerance, then locked by a test. The suite
+is **270 passed** (3 research/LSTM tests deselected — the serve path is green
+without TensorFlow), **coverage 91.9 %** (gate `fail_under=85`), ruff + strict
+mypy clean.
+
+| Check | Independent oracle | Tolerance | Test |
+| --- | --- | --- | --- |
+| GARCH(1,1) log-likelihood | hand-rolled LL vs `arch` at identical params (matched `0.94`-decay EWMA backcast over 75 obs) | `abs=1e-6` | `tests/parity` |
+| GARCH forecast aggregation | hand-rolled path vs `arch` analytic forecast | `abs=1e-9` | `tests/parity` |
+| QLIKE / Diebold-Mariano | closed-form / SciPy Student-t reference | exact / `1e-12` | `tests/unit`, `tests/parity` |
+| XGBoost determinism (fixed seed) | byte-identical predictions across re-fits | exact | `tests/parity` |
+| Forward-target disjointness | feature index ⊆ {≤ t}, target window ⊂ {> t+gap}, disjoint | exact (set algebra) | `tests/property` |
+| Future-perturbation invariance | perturb returns after the forecast origin → forecasts unchanged | exact | `tests/property` |
+| Fit-on-train-only (scaler/GARCH/HAR/XGB) | future perturbation leaves every train-fold fit intact | exact | `tests/property` |
+| Golden best-model on synthetic GARCH | honest null: a reference wins, `ml_beats_garch=False` at h∈{1,5,22} | locked | `tests/regression`, `tests/integration` |
+| Import purity | `import volforecast` triggers no `arch`/`xgboost`/TF import, no I/O | subprocess | `tests/regression` |
+
+## Reproduce
+
+```bash
+git clone https://github.com/FatihHekim0glu/volforecast && cd volforecast
+uv venv && uv pip install -e ".[data,viz,dev]"
+
+# 1) Full quality gate (ruff + strict mypy + pytest-cov >= 85, NO TensorFlow):
+uv run ruff check .
+uv run mypy src
+uv run pytest -m "not research" --cov=volforecast      # 270 passed, ~92% cov
+
+# 2) Regenerate the synthetic results table above (seed=7, byte-stable):
+uv run python - <<'PY'
+import volforecast as vf
+ohlc = vf.generate_garch_ohlc(n_obs=1500, seed=7)
+for h in (1, 5, 22):
+    s = vf.run_vol_forecast(ohlc, horizon=h, seed=7).summary
+    q = {k: round(v, 3) for k, v in s.qlike_by_model.items()}
+    print(f"h={h:>2}  best={s.best_model:<7} ml_beats_garch={s.ml_beats_garch} "
+          f"SPA_p={s.spa_pvalue:.3f}  QLIKE={q}")
+PY
+```
+
+Same seed → byte-identical QLIKE, `best_model`, and SPA *p*-values; the table is
+locked by `tests/regression`. The research-only LSTM (the `[research]` extra) is
+the only thing TensorFlow gates, and it never appears on this path.
 
 ## Limitations
 

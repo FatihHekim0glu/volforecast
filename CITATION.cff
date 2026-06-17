@@ -1,0 +1,92 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "volforecast: GARCH vs ML for realized-volatility forecasting, benchmarked honestly out-of-sample"
+abstract: >-
+  A pure, typed Python library that forecasts the h-day-ahead realized volatility
+  of a stock index and honestly tests whether XGBoost (or a research-only LSTM)
+  beats a well-specified GARCH(1,1)/HAR-RV out-of-sample. Models are fit
+  inside each walk-forward train fold only (no full-sample leakage), with
+  forward-only RV targets separated by an explicit gap. Evaluation is QLIKE
+  (robust to the noisy RV proxy) plus Diebold-Mariano and Hansen-SPA
+  significance, so the best_model / ml_beats_garch verdict is a pure function of
+  the evidence. The honest, null-to-modest finding (Hansen & Lunde 2005) is that
+  GARCH(1,1)/HAR-RV are hard to beat; the shipped default runs on a synthetic
+  GARCH(1,1)-like series, so the null holds by construction. No profit is claimed.
+type: software
+version: 0.1.0
+date-released: "2026-06-17"
+license: MIT
+repository-code: "https://github.com/FatihHekim0glu/volforecast"
+url: "https://fatihhekimoglu.com"
+authors:
+  - family-names: "FatihHekim0glu"
+keywords:
+  - volatility-forecasting
+  - garch
+  - har-rv
+  - realized-volatility
+  - quantitative-finance
+  - xgboost
+  - diebold-mariano
+  - hansen-spa
+references:
+  - type: article
+    title: "A forecast comparison of volatility models: does anything beat a GARCH(1,1)?"
+    authors:
+      - family-names: "Hansen"
+        given-names: "Peter Reinhard"
+      - family-names: "Lunde"
+        given-names: "Asger"
+    journal: "Journal of Applied Econometrics"
+    volume: 20
+    issue: 7
+    year: 2005
+  - type: article
+    title: "A simple approximate long-memory model of realized volatility"
+    authors:
+      - family-names: "Corsi"
+        given-names: "Fulvio"
+    journal: "Journal of Financial Econometrics"
+    volume: 7
+    issue: 2
+    year: 2009
+  - type: article
+    title: "A test for superior predictive ability"
+    authors:
+      - family-names: "Hansen"
+        given-names: "Peter Reinhard"
+    journal: "Journal of Business & Economic Statistics"
+    volume: 23
+    issue: 4
+    year: 2005
+  - type: article
+    title: "Comparing predictive accuracy"
+    authors:
+      - family-names: "Diebold"
+        given-names: "Francis X."
+      - family-names: "Mariano"
+        given-names: "Roberto S."
+    journal: "Journal of Business & Economic Statistics"
+    volume: 13
+    issue: 3
+    year: 1995
+  - type: article
+    title: "Volatility forecast comparison using imperfect volatility proxies"
+    authors:
+      - family-names: "Patton"
+        given-names: "Andrew J."
+    journal: "Journal of Econometrics"
+    volume: 160
+    issue: 1
+    year: 2011
+  - type: article
+    title: "The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting, and Non-Normality"
+    authors:
+      - family-names: "Bailey"
+        given-names: "David H."
+      - family-names: "Lopez de Prado"
+        given-names: "Marcos"
+    journal: "The Journal of Portfolio Management"
+    volume: 40
+    issue: 5
+    year: 2014
