@@ -41,9 +41,8 @@ arm (TensorFlow) is never installed or imported on the serve path or in CI.
 ## Commit hygiene
 
 - Use clear, present-tense commit messages.
-- **Do not** add AI-attribution trailers: no `Co-Authored-By` lines,
-  no "Generated with" attribution, no robot-emoji attribution lines. The
-  `.github/workflows/no-ai-attribution.yml` guard fails any PR that contains them.
+- Keep trailers clean: do not add co-author or generated-with attribution
+  trailers to commits or pull requests.
 
 ## Pull requests
 
