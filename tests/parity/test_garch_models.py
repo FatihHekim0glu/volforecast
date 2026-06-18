@@ -39,7 +39,7 @@ def _log_returns(close: pd.Series) -> pd.Series:
 
 
 # --------------------------------------------------------------------------- #
-# Hand-rolled GARCH(1,1) log-likelihood — the parity oracle                    #
+# Hand-rolled GARCH(1,1) log-likelihood - the parity oracle                    #
 # --------------------------------------------------------------------------- #
 @pytest.mark.parity
 def test_oracle_matches_arch_zero_mean(garch_series: pd.DataFrame) -> None:
@@ -127,7 +127,7 @@ def test_oracle_exposed_on_top_level_api(garch_series: pd.DataFrame) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# fit_garch — fit-on-train-only across the family                              #
+# fit_garch - fit-on-train-only across the family                              #
 # --------------------------------------------------------------------------- #
 @pytest.mark.parity
 @pytest.mark.parametrize("kind", GARCH_KINDS)
@@ -204,7 +204,7 @@ def test_fit_garch_rejects_zero_variance() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# forecast_garch_vol — positive, finite, unscaled, every horizon and kind      #
+# forecast_garch_vol - positive, finite, unscaled, every horizon and kind      #
 # --------------------------------------------------------------------------- #
 @pytest.mark.parity
 @pytest.mark.parametrize("kind", GARCH_KINDS)

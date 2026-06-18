@@ -1,8 +1,8 @@
 """Plotly figure builders (lazy plotly).
 
 Each builder returns a plain ``dict`` shaped ``{"data": [...], "layout": {...}}``
-— the same JSON shape the FastAPI layer serializes and the Next.js
-``PlotlyChart`` component renders — so figures cross the API boundary with no
+ - the same JSON shape the FastAPI layer serializes and the Next.js
+``PlotlyChart`` component renders - so figures cross the API boundary with no
 Plotly object leaking through. Plotly is an OPTIONAL dependency (the ``viz``
 extra) imported lazily inside each builder; importing this module has no side
 effects and does not require Plotly.

@@ -44,7 +44,7 @@ def test_forward_target_window_is_strictly_future(horizon: int, gap: int) -> Non
         if not np.isfinite(values[i]):
             continue
         # The target at i is the RMS of RV over the strictly-future window
-        # (i + gap, i + gap + horizon] — feature index {<= i} and target window
+        # (i + gap, i + gap + horizon] - feature index {<= i} and target window
         # {> i + gap} are DISJOINT.
         first = i + gap + 1
         last = i + gap + horizon

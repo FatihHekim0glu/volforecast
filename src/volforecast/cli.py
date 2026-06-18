@@ -37,7 +37,7 @@ def build_app() -> typer.Typer:
     cli = typer.Typer(
         name="volforecast",
         add_completion=False,
-        help="GARCH vs ML volatility forecasting — benchmarked honestly OOS "
+        help="GARCH vs ML volatility forecasting - benchmarked honestly OOS "
         "(QLIKE + Diebold-Mariano + Hansen-SPA). GARCH(1,1)/HAR-RV are hard to beat.",
         no_args_is_help=True,
     )
@@ -138,7 +138,7 @@ def run(
         Forecast horizon in trading days (1, 5, or 22).
     models:
         Model labels to evaluate; ``None`` uses the default served set
-        (GARCH/EGARCH/HAR-RV/EWMA/XGBoost/RW — never the research-only LSTM).
+        (GARCH/EGARCH/HAR-RV/EWMA/XGBoost/RW - never the research-only LSTM).
     rv_estimator:
         RV proxy for features and target.
     step:
@@ -252,7 +252,7 @@ def _run_and_report(**kwargs: Any) -> int:
     print(f"ML beats GARCH     : {'YES' if ml_beats else 'NO'}")
     if not ml_beats:
         print(
-            "verdict            : GARCH(1,1)/HAR-RV not beaten — honest null (Hansen-Lunde 2005)."
+            "verdict            : GARCH(1,1)/HAR-RV not beaten - honest null (Hansen-Lunde 2005)."
         )
     return 0
 

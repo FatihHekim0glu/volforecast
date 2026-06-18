@@ -7,7 +7,7 @@ features for the XGBoost model.
 
 LAG SAFETY: every component is a trailing average of PAST RV and is then
 ``.shift()``-lagged so that the feature row at timestamp ``t`` uses only RV
-observed at or before ``t`` — never ``t``'s own forward target. A property test
+observed at or before ``t`` - never ``t``'s own forward target. A property test
 asserts this lag-safety. Importing this module has no side effects.
 """
 
@@ -110,7 +110,7 @@ def har_components(rv: pd.Series) -> pd.DataFrame:
     series = ensure_series(rv, name="rv", allow_nan=True)
 
     # Trailing averages of PAST RV. ``min_periods`` equals the window so a
-    # component is NaN until its full warm-up has accrued — no partial windows
+    # component is NaN until its full warm-up has accrued - no partial windows
     # leak a short-sample bias into early rows.
     daily = series.rolling(HAR_DAILY_WINDOW, min_periods=HAR_DAILY_WINDOW).mean()
     weekly = series.rolling(HAR_WEEKLY_WINDOW, min_periods=HAR_WEEKLY_WINDOW).mean()

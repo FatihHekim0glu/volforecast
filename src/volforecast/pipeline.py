@@ -228,7 +228,7 @@ def _significance(
     # --- Hansen SPA over the whole candidate set vs the benchmark ----------- #
     # The SPA bootstrap needs a minimum number of aligned folds to be meaningful;
     # with too few folds we conservatively leave the composite null UNREJECTED
-    # (p = 1.0) rather than hard-failing — the honest, snooping-safe default.
+    # (p = 1.0) rather than hard-failing - the honest, snooping-safe default.
     spa_pvalue = 1.0
     if candidate_labels:
         losses = pd.concat([loss_by_model[m] for m in candidate_labels], axis=1).dropna()
@@ -287,7 +287,7 @@ def run_vol_forecast(
         Forecast horizon in trading days (1, 5, or 22).
     models:
         Model labels to evaluate (subset of the served set); ``None`` uses the
-        default served set (GARCH/EGARCH/HAR-RV/EWMA/XGBoost/RW — never the LSTM).
+        default served set (GARCH/EGARCH/HAR-RV/EWMA/XGBoost/RW - never the LSTM).
     cost_bps:
         Per-side transaction cost in basis points (recorded for the optional
         downstream overlay; it does not affect the forecast scoring).
@@ -335,7 +335,7 @@ def run_vol_forecast(
 
     # Refit stride must be >= the horizon so consecutive OOS test slices never
     # overlap (a step < horizon double-counts overlapping windows in the DM/SPA
-    # tests) AND so the per-fold GARCH MLE refit count stays bounded — a daily
+    # tests) AND so the per-fold GARCH MLE refit count stays bounded - a daily
     # refit (step=1) over a multi-year span is ~500 GARCH fits and blows the
     # synchronous request budget. Monthly refits keep the walk-forward genuinely
     # OOS while finishing in seconds.
@@ -388,9 +388,9 @@ def build_vol_forecast_figures(run: VolForecastRun) -> dict[str, FigureDict]:
 
     Returns a mapping with:
 
-    - ``"forecast_figure"`` — realized volatility (the truth) vs each model's
+    - ``"forecast_figure"`` - realized volatility (the truth) vs each model's
       forward-vol forecast on a shared date axis;
-    - ``"error_figure"`` — the OOS-QLIKE-by-model bar with ``best_model``
+    - ``"error_figure"`` - the OOS-QLIKE-by-model bar with ``best_model``
       highlighted.
 
     Both figures are plain ``{"data": ..., "layout": ...}`` dicts (no Plotly

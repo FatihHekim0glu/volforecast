@@ -2,7 +2,7 @@
 
 The LSTM arm must be importable as a module without TensorFlow (import-pure) and,
 when TensorFlow is absent (the lean container), calling into it must raise a
-clear, catchable :class:`volforecast.VolForecastError` — never crash the process.
+clear, catchable :class:`volforecast.VolForecastError` - never crash the process.
 This test is marked ``research`` so the serve-path CI run (``-m "not research"``)
 skips it entirely.
 """

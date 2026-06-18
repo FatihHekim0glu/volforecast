@@ -299,7 +299,7 @@ def forecast_garch_vol(
         raise ValidationError(f"horizon must be >= 1, got {horizon}.")
     horizon = int(horizon)
     # Validate ``returns`` is well-formed (no NaN/inf) even though state comes
-    # from the fit — this keeps the call site honest and the contract uniform.
+    # from the fit - this keeps the call site honest and the contract uniform.
     _ = ensure_series(returns, name="returns", allow_nan=False)
 
     fit_scale = float(fit.meta.get("scale", scale))

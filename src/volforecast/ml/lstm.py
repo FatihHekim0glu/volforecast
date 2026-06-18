@@ -1,7 +1,7 @@
 """RESEARCH-ONLY LSTM volatility forecaster (NOT served, NOT vendored).
 
 This arm exists purely to document that we tried a deep-learning forecaster and
-that — per Hansen & Lunde (2005) and our own honest-null discipline — it rarely
+that - per Hansen & Lunde (2005) and our own honest-null discipline - it rarely
 justifies its compute against a well-specified GARCH(1,1)/HAR-RV. It is gated
 behind the ``[research]`` extra and a LAZY TensorFlow import, and is NEVER
 imported on the serve path: the top-level :mod:`volforecast` package does not

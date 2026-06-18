@@ -3,10 +3,10 @@
 Covers (group ``realized``):
 
 - RV estimator positivity, naming, warm-up NaN structure, and dispatch;
-- scale behaviour — log-return RV is invariant to a multiplicative price rescale,
+- scale behaviour - log-return RV is invariant to a multiplicative price rescale,
   while range-RV scales linearly when the *log range* is rescaled;
 - determinism (same input → identical output);
-- forward-target DISJOINTNESS — for a non-NaN target at ``t`` the aggregation
+- forward-target DISJOINTNESS - for a non-NaN target at ``t`` the aggregation
   window lives strictly in ``{> t + gap}`` while features observable at ``t`` live
   in ``{<= t}``, so the two index sets never overlap;
 - input validation (bad window/horizon/gap, missing columns, non-positive prices,
@@ -192,7 +192,7 @@ def test_dispatcher_rejects_unknown_estimator(garch_series: pd.DataFrame) -> Non
 
 
 # --------------------------------------------------------------------------- #
-# forward RV target — disjointness & correctness                              #
+# forward RV target - disjointness & correctness                              #
 # --------------------------------------------------------------------------- #
 
 
