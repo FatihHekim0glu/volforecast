@@ -3,8 +3,8 @@
 The fixtures are real reference data (see ``conftest.py``); these tests pin their
 shape/invariants so downstream kernels can rely on them. (The original
 stub-contract smoke tests have been superseded by the dedicated behavioural
-suites — ``test_realized_estimators``, ``test_ml_baselines_har``,
-``test_evaluation``, ``test_walkforward_data``, etc. — now that every kernel is
+suites - ``test_realized_estimators``, ``test_ml_baselines_har``,
+``test_evaluation``, ``test_walkforward_data``, etc. - now that every kernel is
 implemented.)
 """
 

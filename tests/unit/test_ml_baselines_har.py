@@ -5,7 +5,7 @@ Covers the kernels owned by this group:
 - ``features/har.py``: HAR-RV component builder (lag-safety, exact values, the
   ``build_har_features`` feature/target bundle and exogenous join);
 - ``baselines.py``: random-walk vol, EWMA/RiskMetrics (λ=0.94), HAR-RV (Corsi
-  OLS) — correctness against hand references and positivity;
+  OLS) - correctness against hand references and positivity;
 - ``ml/xgb.py``: XGBoost forecaster determinism, the feature contract, and the
   fit-on-train-only guards (validation/insufficient-data).
 
@@ -65,7 +65,7 @@ def test_har_components_exact_lagged_values() -> None:
 def test_har_components_warmup_is_nan() -> None:
     rv = _rv_series(40)
     hc = har_components(rv)
-    # Daily needs 1 prior obs, weekly 5, monthly 22 — all then shifted by 1.
+    # Daily needs 1 prior obs, weekly 5, monthly 22 - all then shifted by 1.
     assert np.isnan(hc["rv_daily"].iloc[0])
     assert hc["rv_weekly"].iloc[:5].isna().all()
     assert hc["rv_monthly"].iloc[:22].isna().all()
@@ -81,7 +81,7 @@ def test_har_feature_lag_safety_no_lookahead(t: int) -> None:
 
     This is the load-bearing leakage guarantee: perturbing RV from position ``t``
     onward (the feature's own present and future) must not move the feature value
-    at ``t`` — it depends only on RV strictly before ``t``.
+    at ``t`` - it depends only on RV strictly before ``t``.
     """
     rv = _rv_series(160, seed=3)
     base = har_components(rv)

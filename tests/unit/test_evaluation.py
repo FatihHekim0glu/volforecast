@@ -267,7 +267,7 @@ def test_betainc_endpoints() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Hansen SPA — the data-snooping guard                                        #
+# Hansen SPA - the data-snooping guard                                        #
 # --------------------------------------------------------------------------- #
 
 
@@ -541,7 +541,7 @@ def test_verdict_raises_when_ml_winner_missing_dm_pvalue() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Honest-null guard — the headline guarantee on GARCH data                    #
+# Honest-null guard - the headline guarantee on GARCH data                    #
 # --------------------------------------------------------------------------- #
 
 
@@ -569,7 +569,7 @@ def test_honest_null_on_garch_losses_does_not_reject_spa(garch_series: pd.DataFr
     """SPA over GARCH-data QLIKE losses does not crown a snooped ML winner.
 
     Build QLIKE losses for a realized-variance proxy where every model is a noisy
-    copy of the benchmark (no model has a real edge — the GARCH-true regime). The
+    copy of the benchmark (no model has a real edge - the GARCH-true regime). The
     SPA composite null must NOT be rejected.
     """
     rets = np.log(garch_series["close"]).diff().dropna()

@@ -2,8 +2,8 @@
 
 This is the leakage-control heart of the project and the explicit fix for the
 Stock-Price-Forecast anti-pattern (fitting a scaler/model on the FULL series and
-then "evaluating" out-of-sample). Here EVERY estimator — the RV scaler, the GARCH
-parameters, the HAR-RV OLS, and the XGBoost booster — is fit INSIDE each
+then "evaluating" out-of-sample). Here EVERY estimator - the RV scaler, the GARCH
+parameters, the HAR-RV OLS, and the XGBoost booster - is fit INSIDE each
 walk-forward TRAIN fold and only then asked to forecast the disjoint TEST fold.
 
 Guards enforced and property-tested:
@@ -40,7 +40,7 @@ from volforecast.data import log_returns
 from volforecast.features.har import build_har_features, har_components
 from volforecast.realized.estimators import forward_rv_target, realized_volatility
 
-#: The default model set fitted on the serve path (LSTM excluded — research only).
+#: The default model set fitted on the serve path (LSTM excluded - research only).
 DEFAULT_MODELS: tuple[str, ...] = ("garch", "egarch", "har_rv", "ewma", "xgboost", "rw")
 
 #: The GARCH-family labels routed to ``arch`` (mapped to its ``kind`` selector).
@@ -121,7 +121,7 @@ class WalkForwardConfig:
         This is the number of rows skipped after the train fold before the test
         origin. It is sized to the horizon so that the last train row's forward
         target window ``(t + gap, t + gap + horizon]`` cannot overlap the test
-        origin's features — the leakage purge.
+        origin's features - the leakage purge.
         """
         return self.gap + self.horizon
 
@@ -297,7 +297,7 @@ def run_walk_forward(
     # --- Series computed ONCE, but all no-lookahead -------------------------- #
     # ``rv`` at row t uses only OHLC at or before t (trailing range estimator);
     # ``returns`` at row t uses only closes at or before t. The forward ``target``
-    # at row t deliberately uses FUTURE RV — but it is the LABEL (the truth read
+    # at row t deliberately uses FUTURE RV - but it is the LABEL (the truth read
     # at the test origin), never an input to any fitter or feature. Computing them
     # once is therefore leakage-safe: per fold we only ever SLICE these.
     rv = realized_volatility(frame, estimator=rv_estimator, window=1)
@@ -319,7 +319,7 @@ def run_walk_forward(
         origin_label = index[test_origin]
         truth = target.iloc[test_origin]
         if not np.isfinite(truth):
-            # The test origin's forward window is incomplete (boundary) — skip it
+            # The test origin's forward window is incomplete (boundary) - skip it
             # rather than fabricate a target.
             n_skipped += 1
             continue
@@ -377,7 +377,7 @@ def _forecast_fold(
     """Fit every requested model on ONE train fold and forecast the test origin.
 
     Every estimator here is fit on the train slice ``[train_start, train_end)``
-    only — the GARCH parameters, the HAR-RV OLS, and the XGBoost booster are all
+    only - the GARCH parameters, the HAR-RV OLS, and the XGBoost booster are all
     re-estimated from scratch on this fold and never touch any row at or after
     ``train_end`` (the forecast origin). That is the explicit fix for the
     full-sample-fit anti-pattern. The closed-form RW/EWMA forecasts read the value
@@ -428,7 +428,7 @@ def _har_forecast(rv_train: pd.Series, *, config: WalkForwardConfig) -> float:
 
     The HAR components and forward target are recomputed on the TRAIN slice only,
     the OLS coefficients are fit in-sample, and the forecast reads the last
-    observable (lagged) HAR component row — which carries information up to the
+    observable (lagged) HAR component row - which carries information up to the
     forecast origin and no further.
     """
     components = har_components(rv_train)

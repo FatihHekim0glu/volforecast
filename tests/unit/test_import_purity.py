@@ -3,7 +3,7 @@
 These guard the two load-bearing invariants of the scaffold:
 
 1. ``import volforecast`` has ZERO import-time side effects and pulls in NONE of
-   the heavy fitters (``arch``, ``xgboost``, ``tensorflow``) — they are imported
+   the heavy fitters (``arch``, ``xgboost``, ``tensorflow``) - they are imported
    lazily inside their functions only.
 2. The research-only LSTM is NOT reachable from the top-level package or the
    ``volforecast.ml`` subpackage (the container guarantee).

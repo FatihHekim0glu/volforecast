@@ -21,7 +21,7 @@ import pandas as pd
 from volforecast._exceptions import InsufficientDataError, ValidationError
 from volforecast._validation import ensure_dataframe, ensure_series
 
-#: Default XGBoost hyper-parameters (small, regularized — RV data is short and
+#: Default XGBoost hyper-parameters (small, regularized - RV data is short and
 #: noisy, so we keep the model deliberately modest to honour the null).
 DEFAULT_XGB_PARAMS: dict[str, Any] = {
     "n_estimators": 200,

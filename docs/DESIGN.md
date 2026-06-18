@@ -27,7 +27,7 @@ guarantees, and the testing strategy that keeps the honest headline honest. For
 **Non-goals**
 
 - Beating GARCH(1,1)/HAR-RV. The honest finding is that, on OOS QLIKE with SPA
-  control, ML does not — by a significant margin
+  control, ML does not, by a significant margin
   ([ADR-0004](decisions/0004-honest-garch-hard-to-beat.md)). No profit is claimed.
 - A live trading system. The optional vol-targeting overlay exists only to attach
   a *deflated* Sharpe to the forecasts; it is not a strategy.
@@ -39,7 +39,7 @@ guarantees, and the testing strategy that keeps the honest headline honest. For
 The package is strictly layered; each layer imports only from the ones below it.
 `src/` has **zero import-time side effects**, guarded by a subprocess
 import-purity test, and `import volforecast` pulls in **no** `arch` / `xgboost` /
-TensorFlow — every heavy fitter is imported lazily inside its function.
+TensorFlow; every heavy fitter is imported lazily inside its function.
 
 ```
         cli.py (Typer)        plots.py (Plotly, lazy)        api/ (FastAPI)
@@ -77,13 +77,13 @@ Copied verbatim from the HRP infra and renamed `hrp` → `volforecast`.
 `RISKMETRICS_LAMBDA=0.94`, `SUPPORTED_HORIZONS={1,5,22}`, the HAR windows).
 `_validation.py` holds the input guards; `_rng.py` provides seeded PCG64
 substreams and `_manifest.py` the `RunManifest` whose BLAKE2b config-hash makes a
-whole run reproducible — the same seed yields byte-identical QLIKE, verdict, and
+whole run reproducible: the same seed yields byte-identical QLIKE, verdict, and
 SPA *p*-value.
 
 ### `realized/` and `features/`
 
 `estimators.py` builds the three RV proxies (Parkinson, Garman-Klass from OHLC,
-close-to-close) and — critically — `forward_rv_target`, the strictly-forward
+close-to-close) and, critically, `forward_rv_target`, the strictly-forward
 target over `(t+gap, t+gap+h]` ([ADR-0002](decisions/0002-forward-rv-target-gap.md)).
 `features/har.py` builds the Corsi (2009) HAR-RV design (daily/weekly/monthly RV
 components), every column `.shift()`-lagged so no feature can see its own bar.
@@ -96,7 +96,7 @@ oracle: it mirrors `arch`'s `0.94`-decay EWMA backcast over 75 observations so t
 two LLs agree to `1e-6` ([ADR-0003](decisions/0003-garch-arch-parity.md)).
 `ml/xgb.py` is the XGBoost forecaster on HAR/lagged-RV/VIX features (single-thread,
 fixed-seed deterministic). `ml/lstm.py` is the research-only LSTM behind a lazy
-TensorFlow import — **never** re-exported from `__init__` and **never** reachable
+TensorFlow import, **never** re-exported from `__init__` and **never** reachable
 from `pipeline.run_vol_forecast`
 ([ADR-0005](decisions/0005-lstm-research-only-no-tf-container.md)). `baselines.py`
 holds the real bars to beat: random-walk vol, EWMA/RiskMetrics (λ=0.94), and the
@@ -107,7 +107,7 @@ HAR-RV OLS.
 The leakage-control heart. Anchored (expanding) or rolling folds, a **purge** that
 drops boundary rows whose target window overlaps the test fold, and an **embargo
 sized to `h`**. Every estimator is fit **inside the train fold only**
-([ADR-0001](decisions/0001-fit-on-train-only.md)) — the explicit fix for the
+([ADR-0001](decisions/0001-fit-on-train-only.md)), the explicit fix for the
 "fit-on-the-full-series then evaluate OOS" anti-pattern.
 
 ### `evaluation/`
@@ -179,20 +179,20 @@ Tests are partitioned by intent under `tests/` (markers in `pyproject.toml`);
 seeded `conftest` fixtures (`garch_series`, `har_series`, `pure_noise`) give every
 layer deterministic, adversarial inputs.
 
-- **`unit/`** — isolated kernels: RV estimators, the HAR builder, QLIKE/MSE, the
+- **`unit/`**: isolated kernels: RV estimators, the HAR builder, QLIKE/MSE, the
   verdict truth table.
-- **`parity/`** — golden checks vs independent references: hand-rolled GARCH(1,1)
+- **`parity/`**: golden checks vs independent references: hand-rolled GARCH(1,1)
   LL vs `arch` at `1e-6`, the forecast path at `1e-9`, DM vs a closed form,
   XGBoost determinism (byte-identical).
-- **`property/`** (Hypothesis) — the invariants above: forward-target
+- **`property/`** (Hypothesis): the invariants above: forward-target
   disjointness, future-perturbation invariance, RV scale behaviour, HAR lag-safety.
-- **`regression/`** — the honest null, locked: a GARCH/HAR-RV reference wins on
+- **`regression/`**: the honest null, locked: a GARCH/HAR-RV reference wins on
   `garch_series` with `ml_beats_garch=False` at every horizon; no-lookahead
   walk-forward; the import-purity subprocess test.
-- **`integration/`** — end-to-end `run_vol_forecast` on the synthetic GARCH series.
+- **`integration/`**: end-to-end `run_vol_forecast` on the synthetic GARCH series.
 
-The serve-path suite is **270 passed** with the 3 research/LSTM tests **deselected**
-(`-m "not research"`), coverage **91.9 %** (gate 85). TensorFlow is required only
+The serve-path suite is **284 passed** with the 4 research/LSTM tests **deselected**
+(`-m "not research"`), coverage **94.9 %** (gate 85). TensorFlow is required only
 for the deselected LSTM tests.
 
 ## Backend & frontend boundary
@@ -200,7 +200,7 @@ for the deselected LSTM tests.
 The compute core is decoupled from delivery. The backend vendors
 `volforecast[data]` (`arch` + `xgboost`, **not** `[research]`) under
 `api/lib/volforecast/` and exposes `POST /tools/volforecast/run`, fitting
-GARCH+HAR+XGBoost **per request** (fast on a short index series — no pre-trained
+GARCH+HAR+XGBoost **per request** (fast on a short index series, no pre-trained
 artifact). The LSTM arm is not vendored and is not importable on the serve path; a
 Polygon-provider failure degrades to the synthetic generator
 (`data_source: polygon|synthetic`) rather than hard-failing. The response returns

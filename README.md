@@ -1,4 +1,4 @@
-# volforecast — GARCH vs ML for volatility forecasting
+# volforecast: GARCH vs ML for volatility forecasting
 
 [![CI](https://github.com/FatihHekim0glu/volforecast/actions/workflows/ci.yml/badge.svg)](https://github.com/FatihHekim0glu/volforecast/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -6,25 +6,25 @@
 
 Forecast the **h-day-ahead realized volatility** of a stock index and honestly
 test whether **XGBoost** (or a research-only **LSTM**) beats a well-specified
-**GARCH(1,1) / HAR-RV** out-of-sample — judged on **QLIKE** plus
+**GARCH(1,1) / HAR-RV** out-of-sample, judged on **QLIKE** plus
 **Diebold-Mariano** and **Hansen-SPA** significance.
 
 > **Honest headline (the null-to-modest finding).** GARCH(1,1) and HAR-RV are
 > **hard to beat**. Across the model set, XGBoost wins only *marginally* on
-> out-of-sample QLIKE — if at all — and the LSTM rarely justifies its compute.
+> out-of-sample QLIKE, if at all, and the LSTM rarely justifies its compute.
 > Hansen-SPA does **not** crown ML a significant winner. This reproduces
 > Hansen & Lunde (2005). **No profit is claimed.** The shipped default runs on a
 > synthetic GARCH(1,1)-like series, so the null holds *by construction*; real
 > data is available via Polygon / `--data`.
 
 The `best_model` and `ml_beats_garch` outputs are a **pure function** of OOS
-QLIKE plus DM/SPA significance — never a narrative choice. `ml_beats_garch` is
+QLIKE plus DM/SPA significance, never a narrative choice. `ml_beats_garch` is
 `True` only when an ML model has the strictly lowest QLIKE **and** beats the best
 GARCH/HAR-RV reference by an SPA- and DM-significant margin.
 
 ## Results on the synthetic default
 
-These are the **actual** numbers from the shipped key-free default — a seeded
+These are the **actual** numbers from the shipped key-free default: a seeded
 GARCH(1,1)-like OHLC series (`generate_garch_ohlc(n_obs=1500, seed=7)`),
 Garman-Klass RV, anchored walk-forward (`train_window=504`, `gap=1`). Reproduce
 them with the [Reproduce](#reproduce) block; OOS **QLIKE** (lower is better):
@@ -37,8 +37,8 @@ them with the [Reproduce](#reproduce) block; OOS **QLIKE** (lower is better):
 
 Read this honestly. A **GARCH/HAR-RV reference wins at every horizon**, never the
 ML arm, so `ml_beats_garch=False` throughout and `n_effective_trials=6`. XGBoost
-is *competitive* — a close second at h=1 (0.565 vs 0.529) and h=22 (0.213 vs
-0.200) — which is exactly the "marginal, if at all" ML story. At h=1 its pairwise
+is *competitive*, a close second at h=1 (0.565 vs 0.529) and h=22 (0.213 vs
+0.200), which is exactly the "marginal, if at all" ML story. At h=1 its pairwise
 Diebold-Mariano *p* against the best reference is 0.015, yet it is **not** crowned
 the winner: it does not have the lowest QLIKE *and* the Hansen-SPA composite null
 (*p*=0.50) is not rejected. The SPA gate (which controls the snooping across all
@@ -49,7 +49,7 @@ false "ML wins". This is Hansen & Lunde (2005) reproduced by construction.
 
 ```bash
 uv venv
-# Lean serve stack: GARCH (arch) + XGBoost only — NO TensorFlow.
+# Lean serve stack: GARCH (arch) + XGBoost only, NO TensorFlow.
 uv pip install -e ".[data,viz,dev]"
 ```
 
@@ -78,20 +78,20 @@ EWMA/XGBoost/RW), scores OOS QLIKE/MSE, runs Hansen-SPA + Diebold-Mariano, and
 returns the pure `best_model` / `ml_beats_garch` verdict. The research-only LSTM
 is never reachable from it, so the serve path can never import TensorFlow.
 
-`import volforecast` pulls in **no** `arch` / `xgboost` / TensorFlow — every
+`import volforecast` pulls in **no** `arch` / `xgboost` / TensorFlow; every
 heavy fitter is imported lazily inside its function, and the package is
 import-pure.
 
 ## Method
 
 - **Target.** h-day-ahead realized volatility over a strictly *forward* window
-  `(t+gap, t+gap+h]`, horizons `h ∈ {1, 5, 22}`. RV estimators: Parkinson,
+  `(t+gap, t+gap+h]`, horizons `h in {1, 5, 22}`. RV estimators: Parkinson,
   Garman-Klass (from OHLC), close-to-close.
 - **Baselines.** Random-walk vol, EWMA/RiskMetrics (λ=0.94), HAR-RV (Corsi 2009).
 - **GARCH family.** GARCH(1,1), EGARCH, GJR-GARCH, Student-t innovations via
   `arch`; a hand-rolled GARCH(1,1) log-likelihood is the parity oracle.
 - **ML.** XGBoost on HAR / lagged-RV / VIX features. (LSTM optional, research-only.)
-- **Evaluation.** QLIKE (robust to the noisy RV proxy) + MSE; Diebold-Mariano
+- **Evaluation.** QLIKE (stable under the noisy RV proxy) + MSE; Diebold-Mariano
   pairwise; Hansen-SPA across the whole set (snooping control). Optional
   vol-targeting overlay with a Deflated/Probabilistic Sharpe (`n_trials` = number
   of model configs evaluated).
@@ -101,10 +101,10 @@ import-pure.
 
 ## Validation
 
-The compute core is validated oracle → test: each numeric claim is pinned to an
+The compute core is validated oracle to test: each numeric claim is pinned to an
 **independent reference** at a fixed tolerance, then locked by a test. The suite
-is **270 passed** (3 research/LSTM tests deselected — the serve path is green
-without TensorFlow), **coverage 91.9 %** (gate `fail_under=85`), ruff + strict
+is **284 passed** (4 research/LSTM tests deselected, the serve path is green
+without TensorFlow), **coverage 94.9 %** (gate `fail_under=85`), ruff + strict
 mypy clean.
 
 | Check | Independent oracle | Tolerance | Test |
@@ -113,10 +113,10 @@ mypy clean.
 | GARCH forecast aggregation | hand-rolled path vs `arch` analytic forecast | `abs=1e-9` | `tests/parity` |
 | QLIKE / Diebold-Mariano | closed-form / SciPy Student-t reference | exact / `1e-12` | `tests/unit`, `tests/parity` |
 | XGBoost determinism (fixed seed) | byte-identical predictions across re-fits | exact | `tests/parity` |
-| Forward-target disjointness | feature index ⊆ {≤ t}, target window ⊂ {> t+gap}, disjoint | exact (set algebra) | `tests/property` |
-| Future-perturbation invariance | perturb returns after the forecast origin → forecasts unchanged | exact | `tests/property` |
+| Forward-target disjointness | feature index within {<= t}, target window within {> t+gap}, disjoint | exact (set algebra) | `tests/property` |
+| Future-perturbation invariance | perturb returns after the forecast origin, forecasts unchanged | exact | `tests/property` |
 | Fit-on-train-only (scaler/GARCH/HAR/XGB) | future perturbation leaves every train-fold fit intact | exact | `tests/property` |
-| Golden best-model on synthetic GARCH | honest null: a reference wins, `ml_beats_garch=False` at h∈{1,5,22} | locked | `tests/regression`, `tests/integration` |
+| Golden best-model on synthetic GARCH | honest null: a reference wins, `ml_beats_garch=False` at h in {1,5,22} | locked | `tests/regression`, `tests/integration` |
 | Import purity | `import volforecast` triggers no `arch`/`xgboost`/TF import, no I/O | subprocess | `tests/regression` |
 
 ## Reproduce
@@ -128,7 +128,7 @@ uv venv && uv pip install -e ".[data,viz,dev]"
 # 1) Full quality gate (ruff + strict mypy + pytest-cov >= 85, NO TensorFlow):
 uv run ruff check .
 uv run mypy src
-uv run pytest -m "not research" --cov=volforecast      # 270 passed, ~92% cov
+uv run pytest -m "not research" --cov=volforecast      # 284 passed, ~95% cov
 
 # 2) Regenerate the synthetic results table above (seed=7, byte-stable):
 uv run python - <<'PY'
@@ -142,8 +142,8 @@ for h in (1, 5, 22):
 PY
 ```
 
-Same seed → byte-identical QLIKE, `best_model`, and SPA *p*-values; the table is
-locked by `tests/regression`. The research-only LSTM (the `[research]` extra) is
+Same seed gives byte-identical QLIKE, `best_model`, and SPA *p*-values; the table
+is locked by `tests/regression`. The research-only LSTM (the `[research]` extra) is
 the only thing TensorFlow gates, and it never appears on this path.
 
 ## Limitations
@@ -151,7 +151,7 @@ the only thing TensorFlow gates, and it never appears on this path.
 - **Survivorship bias: N/A.** A single index series is forecast, not a
   cross-section selected on survival, so survivorship bias does not apply.
 - **Synthetic default.** The key-free default is a GARCH(1,1)-generated series, on
-  which GARCH is the true model — the null is honest *by construction*. Real data
+  which GARCH is the true model, so the null is honest *by construction*. Real data
   (Polygon) may shift the margins but, per Hansen & Lunde (2005), GARCH/HAR-RV
   remain hard to beat.
 - **LSTM is research-only.** It is excluded from the container and the serve path;

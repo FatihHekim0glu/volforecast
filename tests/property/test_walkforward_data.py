@@ -33,7 +33,7 @@ pytestmark = pytest.mark.filterwarnings("ignore")
 
 
 # --------------------------------------------------------------------------- #
-# data.py — synthetic GARCH(1,1) generator                                    #
+# data.py - synthetic GARCH(1,1) generator                                    #
 # --------------------------------------------------------------------------- #
 @pytest.mark.unit
 def test_generator_emits_coherent_ohlc() -> None:
@@ -93,7 +93,7 @@ def test_generator_respects_start_anchor() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# data.py — loader + log_returns                                              #
+# data.py - loader + log_returns                                              #
 # --------------------------------------------------------------------------- #
 @pytest.mark.unit
 def test_loader_falls_back_to_synthetic_offline() -> None:
@@ -154,7 +154,7 @@ def test_log_returns_rejects_non_positive() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# engine — config validation + slicing/purge                                  #
+# engine - config validation + slicing/purge                                  #
 # --------------------------------------------------------------------------- #
 @pytest.mark.unit
 def test_config_embargo_and_to_dict() -> None:
@@ -243,7 +243,7 @@ def test_run_walk_forward_rejects_bad_inputs() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# engine — leakage guards (the load-bearing properties)                       #
+# engine - leakage guards (the load-bearing properties)                       #
 # --------------------------------------------------------------------------- #
 def _baseline_config() -> vf.WalkForwardConfig:
     """A fast, baseline-only config (no GARCH/XGB) for the cheap leakage checks."""
@@ -368,7 +368,7 @@ def test_per_model_degrades_to_nan_not_abort() -> None:
     The earliest anchored folds have a warm-up below the GARCH minimum (50 obs),
     so the GARCH fitter raises ``InsufficientDataError`` on those folds; the engine
     must record a NaN for GARCH there (not abort the whole run) while the cheap
-    random-walk baseline still forecasts — the graceful per-model degradation path
+    random-walk baseline still forecasts - the graceful per-model degradation path
     (engine ``_forecast_fold`` except-clause).
     """
     ohlc = vf.generate_garch_ohlc(n_obs=200, seed=2)
@@ -379,7 +379,7 @@ def test_per_model_degrades_to_nan_not_abort() -> None:
     assert result.n_folds > 0
     garch = result.forecasts["garch"]
     # The early (warm-up < 50) folds degrade to NaN; once the anchored window
-    # grows past 50 the GARCH fit succeeds — so we see BOTH NaN and finite rows.
+    # grows past 50 the GARCH fit succeeds - so we see BOTH NaN and finite rows.
     assert garch.isna().any()
     assert garch.notna().any()
     # The random-walk baseline never depends on the GARCH fit and always forecasts.

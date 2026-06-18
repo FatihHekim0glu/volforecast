@@ -4,7 +4,7 @@ This module computes daily realized-volatility (RV) proxies from an OHLC frame
 (Parkinson and Garman-Klass range estimators) and from a close-to-close return
 series, plus the *forward* RV target used by every model: the realized volatility
 over a strictly future window ``(t + gap, t + gap + h]``. The explicit ``gap``
-between the feature timestamp and the target window is the leakage guard — a
+between the feature timestamp and the target window is the leakage guard - a
 feature observed at ``t`` may never see a return inside its own target window.
 
 All estimators are scale-aware (RV scales linearly with the return scale) and

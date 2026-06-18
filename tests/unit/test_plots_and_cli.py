@@ -2,13 +2,13 @@
 
 Covers:
 
-- ``volforecast.plots`` — both figure builders (realized-vol actual-vs-forecasts
+- ``volforecast.plots`` - both figure builders (realized-vol actual-vs-forecasts
   line chart and the QLIKE-by-model bar). Every builder must return a plain
   ``{"data", "layout"}`` mapping whose contents are JSON-serializable (no
   numpy/pandas/Plotly object leaks across the API boundary), and we assert real
   numerical structure (trace count, alignment, NaN -> None, best-bar highlight,
   ascending sort) rather than merely "it runs".
-- ``volforecast.cli`` — ``build_app`` wiring (``run``/``demo`` registered, fresh
+- ``volforecast.cli`` - ``build_app`` wiring (``run``/``demo`` registered, fresh
   instance per call, help output), plus a guarded tiny synthetic forecast smoke
   run that exercises the shared :func:`volforecast.cli.run` orchestration once
   the walk-forward arm is implemented (skipped while it is still a stub so this
@@ -48,7 +48,7 @@ def _assert_figure_dict(fig: object) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# Fixtures (seeded, self-contained — independent of the stubbed kernels)       #
+# Fixtures (seeded, self-contained - independent of the stubbed kernels)       #
 # --------------------------------------------------------------------------- #
 @pytest.fixture
 def rv_panel() -> tuple[pd.Series, pd.DataFrame]:
@@ -95,7 +95,7 @@ def test_rv_forecast_figure_values_and_iso_x_axis(
 
     truth = fig["data"][0]
     np.testing.assert_allclose(np.asarray(truth["y"]), realized.to_numpy())
-    # Datetime index serialized to ISO strings — no Timestamp leaked.
+    # Datetime index serialized to ISO strings - no Timestamp leaked.
     assert truth["x"][0] == realized.index[0].isoformat()
     assert all(isinstance(v, str) for v in truth["x"])
 

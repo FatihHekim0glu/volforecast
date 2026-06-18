@@ -4,12 +4,12 @@ Every fixture is deterministic (driven by :func:`volforecast._rng.make_rng`) and
 returns pandas objects, so tests across the suite share identical synthetic data
 with known structure:
 
-- ``garch_series`` — a GARCH(1,1)-like OHLC frame with realistic volatility
+- ``garch_series`` - a GARCH(1,1)-like OHLC frame with realistic volatility
   clustering (the honest-null default; GARCH is the true model here, so ML must
   not reliably beat it).
-- ``har_series`` — a realized-volatility series with HAR-style daily/weekly/
+- ``har_series`` - a realized-volatility series with HAR-style daily/weekly/
   monthly persistence, for exercising the HAR feature builder and baseline.
-- ``pure_noise`` — i.i.d. Gaussian returns with constant volatility (the no-ARCH
+- ``pure_noise`` - i.i.d. Gaussian returns with constant volatility (the no-ARCH
   null: there is no volatility structure to forecast).
 
 These fixtures are built self-contained (not via the library generator under
@@ -24,7 +24,7 @@ import os
 # Pin BLAS / OpenMP / XGBoost thread pools to a single thread BEFORE numpy (and,
 # transitively, arch/scipy/xgboost) import. The per-fold GARCH/XGBoost fits in
 # the walk-forward suite otherwise oversubscribe every core (hundreds of % CPU)
-# and run far slower than a single-threaded fit on these short folds — pinning
+# and run far slower than a single-threaded fit on these short folds - pinning
 # here keeps the suite both fast and bit-reproducible.
 for _var in (
     "OMP_NUM_THREADS",
@@ -142,7 +142,7 @@ def pure_noise() -> pd.Series:
 
     Shape ``(1500,)`` on a business-day index. There is no volatility clustering,
     so no model should be able to forecast volatility better than the constant
-    baseline — the null where even GARCH has nothing to find.
+    baseline - the null where even GARCH has nothing to find.
     """
     gen = make_rng(_SEED + 2)
     n = 1500

@@ -189,6 +189,14 @@ markers = [
 [tool.coverage.run]
 branch = true
 source = ["volforecast"]
+omit = [
+    # Type-alias-only module: every line is a ``TypeAlias`` assignment that
+    # exists for the type checker, so runtime coverage is not meaningful.
+    "*/volforecast/_typing.py",
+    # Research-only LSTM arm: gated behind the ``[research]`` extra and the
+    # ``research`` marker, never exercised on the serve path the gate measures.
+    "*/volforecast/ml/lstm.py",
+]
 
 [tool.coverage.report]
 fail_under = 85

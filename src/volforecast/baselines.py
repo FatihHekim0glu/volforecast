@@ -1,4 +1,4 @@
-"""Baseline volatility forecasters — the real bars GARCH/ML must clear.
+"""Baseline volatility forecasters - the real bars GARCH/ML must clear.
 
 Three honest baselines, in increasing sophistication:
 
@@ -7,7 +7,7 @@ Three honest baselines, in increasing sophistication:
 - **EWMA / RiskMetrics** (``ewma``): the exponentially-weighted variance with the
   RiskMetrics decay ``lambda = 0.94``;
 - **HAR-RV** (``har_rv``, Corsi 2009): an OLS regression of forward RV on the
-  lagged daily/weekly/monthly RV components — the hardest baseline to beat.
+  lagged daily/weekly/monthly RV components - the hardest baseline to beat.
 
 Each forecaster is FIT on a train fold only (HAR-RV's OLS coefficients are
 estimated in-sample; EWMA seeds its variance from the train history) and then

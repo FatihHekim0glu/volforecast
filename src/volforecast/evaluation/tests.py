@@ -10,7 +10,7 @@ correlated and that comparing many models inflates the chance of a spurious
   correction applied).
 - **Hansen SPA** (2005): a test of the COMPOSITE null that NO model in the
   candidate set beats the benchmark, via a studentized-maximum statistic and a
-  stationary bootstrap — this is the multiple-testing guard that stops us crowning
+  stationary bootstrap - this is the multiple-testing guard that stops us crowning
   ML a winner by data snooping. If ``arch`` is installed its
   :class:`arch.bootstrap.SPA` is used; otherwise a self-contained fallback runs.
 

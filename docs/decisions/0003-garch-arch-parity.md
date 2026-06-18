@@ -11,7 +11,7 @@ GARCH(1,1) is the *bar to beat* in this project (Hansen & Lunde 2005), so the
 correctness of the GARCH numbers is load-bearing: if the reference were subtly
 mis-fit, any "ML wins / loses" verdict would be meaningless. We fit the GARCH
 family with the well-tested `arch` library rather than re-deriving a maximum-
-likelihood optimizer — but "we used a library" is not evidence that we are driving
+likelihood optimizer, but "we used a library" is not evidence that we are driving
 it correctly (right variance recursion, right backcast seed, right scaling).
 
 We need an *independent* check that the model we think we are fitting is the model
@@ -47,7 +47,7 @@ from it correctly.
   exercised only in tests.
 - **Cost.** The oracle must track `arch`'s conventions (backcast window, decay,
   scaling). If `arch` changed its default backcast, the `1e-6` test would fail
-  loudly — which is the point — and the oracle would be updated to match. That
+  loudly (which is the point) and the oracle would be updated to match. That
   coupling is stated here so it is not a surprise.
-- **Risk addressed.** "The benchmark is silently wrong" — which would invalidate
-  every comparison — is closed by an independent, pinned cross-check.
+- **Risk addressed.** "The benchmark is silently wrong", which would invalidate
+  every comparison, is closed by an independent, pinned cross-check.

@@ -10,7 +10,7 @@
 We forecast **realized volatility**, which is itself an aggregate over a *window*
 of days, not a point. That makes the target temporally fat: the RV "label" at
 origin `t` summarizes several future days. If the target window is allowed to
-touch — or overlap — the bars that produced the features, the model is implicitly
+touch, or overlap, the bars that produced the features, the model is implicitly
 scored on data it could see, a subtle form of look-ahead that is easy to introduce
 and hard to spot. A horizon-`h` RV target built naively (e.g. a centered or a
 `(t, t+h]` window with `gap=0` and features drawn from the same bars) leaks.
@@ -45,12 +45,12 @@ forward-target discipline holds *across* folds, not just within a single label.
 
 ## Consequences
 
-- **Positive.** The one place leakage could hide in an RV problem — the
-  feature/target boundary — is named (`gap`), defaulted conservatively, and proven
+- **Positive.** The one place leakage could hide in an RV problem, the
+  feature/target boundary, is named (`gap`), defaulted conservatively, and proven
   disjoint by a test.
-- **Positive.** Horizons `h ∈ {1, 5, 22}` and the gap compose cleanly with the
+- **Positive.** Horizons `h in {1, 5, 22}` and the gap compose cleanly with the
   purge/embargo, so changing `h` cannot reintroduce overlap.
 - **Cost.** We discard `h + gap` origins at the tail and one gap day at each
   origin, trading a little usable data for an unambiguous, non-overlapping label.
-- **Risk addressed.** "RV target window overlaps the feature window" — silent
-  look-ahead specific to volatility targets — is rejected by construction.
+- **Risk addressed.** "RV target window overlaps the feature window", silent
+  look-ahead specific to volatility targets, is rejected by construction.

@@ -2,11 +2,11 @@
 
 The headline outputs ``best_model`` and ``ml_beats_garch`` are PURE FUNCTIONS of
 the out-of-sample QLIKE-by-model dict and the Diebold-Mariano / Hansen-SPA
-significance — never a narrative choice. ``ml_beats_garch`` is ``True`` ONLY when
+significance - never a narrative choice. ``ml_beats_garch`` is ``True`` ONLY when
 an ML model (XGBoost / LSTM) has the strictly lowest OOS QLIKE AND beats the best
 GARCH/HAR-RV reference by a margin that is SPA-significant (and DM-significant
 pairwise). This is the encoded honest null: on GARCH-generated data the ML arm
-will not clear that bar, so the function returns ``ml_beats_garch=False`` — by
+will not clear that bar, so the function returns ``ml_beats_garch=False`` - by
 construction, not by editorial choice.
 
 The truth table is unit-tested. Importing this module has no side effects.
@@ -107,7 +107,7 @@ def derive_verdict(
        If any condition fails, ``ml_beats_garch`` is ``False``.
 
     HONESTY REQUIREMENT: this function MUST NOT report ``ml_beats_garch=True`` on
-    the strength of a lower point QLIKE alone — the SPA and DM gates are
+    the strength of a lower point QLIKE alone - the SPA and DM gates are
     mandatory. On GARCH-generated data those gates do not clear, so the function
     returns ``False`` (the honest null), by construction.
 
