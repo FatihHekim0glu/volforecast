@@ -1,4 +1,4 @@
-# ADR-0005: The LSTM is research-only — no TensorFlow on the serve path or in the container
+# ADR-0005: The LSTM is research-only, no TensorFlow on the serve path or in the container
 
 - **Status:** Accepted
 - **Date:** 2026-06-17
@@ -14,7 +14,7 @@ honest finding is that the LSTM **rarely justifies its compute**: on OOS QLIKE i
 does not clear the GARCH/HAR-RV bar by a SPA-significant margin
 ([ADR-0004](0004-honest-garch-hard-to-beat.md)). Vendoring TensorFlow into the
 hosted API container would bloat the image and slow every request to ship a model
-that, by the project's own honest verdict, does not win — while also widening the
+that, by the project's own honest verdict, does not win, while also widening the
 import-purity and supply-chain surface.
 
 ## Decision
@@ -27,15 +27,15 @@ container:
   statsmodels only. There is **no `[all]`** extra that could pull TF in transitively.
 - `ml/lstm.py` imports TensorFlow **lazily** inside its functions and is **not**
   re-exported from `volforecast/__init__.py` (only `XGBForecaster`/`fit_xgb` are).
-- The public entrypoint `pipeline.run_vol_forecast` — which the CLI **and** the
-  FastAPI route both call — uses the default served set
+- The public entrypoint `pipeline.run_vol_forecast`, which the CLI **and** the
+  FastAPI route both call, uses the default served set
   (`garch/egarch/har_rv/ewma/xgboost/rw`) and **never** routes to the LSTM, so the
   serve path cannot transitively import TensorFlow.
 - The backend vendors `volforecast[data]` (not `[research]`) under
   `api/lib/volforecast/`; the LSTM module is not vendored.
 - LSTM tests are marked `research` and **deselected** on the serve-path suite
   (`-m "not research"`), so CI and coverage are green **without** TensorFlow
-  installed (270 passed, 3 deselected).
+  installed (284 passed, 4 deselected).
 
 ## Consequences
 

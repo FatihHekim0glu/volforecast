@@ -18,7 +18,7 @@ Lunde 2005) holds by construction on the synthetic GARCH default.
 
 ### Added
 
-- **Public entrypoint.** `run_vol_forecast` — the single, import-pure horse-race
+- **Public entrypoint.** `run_vol_forecast`, the single, import-pure horse-race
   entrypoint the CLI and the FastAPI route both call. It accepts an OHLC frame (or
   a close-price series), runs the leakage-guarded walk-forward
   (GARCH/EGARCH/HAR-RV/EWMA/XGBoost/RW), scores OOS QLIKE/MSE, runs Hansen-SPA +
@@ -63,10 +63,10 @@ Lunde 2005) holds by construction on the synthetic GARCH default.
 ### Docs
 
 - `README` with the honest null-to-modest headline, the actual synthetic-default
-  QLIKE table across h∈{1,5,22}, an oracle→test Validation table, a Reproduce
+  QLIKE table across h in {1,5,22}, an oracle-to-test Validation table, a Reproduce
   block, Limitations, and references.
-- `docs/DESIGN.md` and ADRs `0001`–`0005` (fit-on-train-only, forward-RV-target
-  gap, GARCH↔`arch` parity, honest GARCH-hard-to-beat verdict, LSTM
+- `docs/DESIGN.md` and ADRs `0001` to `0005` (fit-on-train-only, forward-RV-target
+  gap, GARCH vs `arch` parity, honest GARCH-hard-to-beat verdict, LSTM
   research-only/no-TF container).
 - `CITATION.cff`.
 

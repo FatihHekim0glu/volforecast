@@ -7,7 +7,7 @@
 
 ## Context
 
-The single most common — and most invisible — error in published
+The single most common, and most invisible, error in published
 "ML-beats-classical" volatility-forecasting results is **full-sample leakage**:
 fitting a feature scaler, the GARCH parameters, or the ML model on the *entire*
 series and only afterward slicing an "out-of-sample" tail to score. Because the
@@ -56,5 +56,5 @@ perturbation would move its output and the test would fail.
   than one full-sample fit. We mitigate with per-request fitting on a short index
   series and single-threaded BLAS/OMP/XGBoost pins for reproducibility; the cost is
   accepted as the price of correctness.
-- **Risk addressed.** "Fit on the full series, then evaluate OOS" — the headline
-  leakage failure mode — is rejected and continuously tested against.
+- **Risk addressed.** "Fit on the full series, then evaluate OOS", the headline
+  leakage failure mode, is rejected and continuously tested against.
