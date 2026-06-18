@@ -21,6 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # The project requires Python >= 3.11, so the matrix starts at 3.11.
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
@@ -35,16 +36,29 @@ jobs:
 
       - name: Install project (lean serve extras + viz + dev; NO TensorFlow)
         # The `research` extra (TensorFlow / LSTM) is deliberately NOT installed:
-        # the serve path and CI never import it.
+        # the serve path and CI never import it, and the LSTM tests are marked
+        # `research` so they are skipped below.
         run: uv pip install --system -e ".[data,viz,dev]"
 
       - name: Lint (ruff)
-        run: ruff check src
+        run: ruff check src tests
+
+      - name: Format check (ruff)
+        run: ruff format --check src tests
 
       - name: Type-check (mypy strict)
         run: mypy src
 
       - name: Test (pytest + coverage gate)
         # Research/LSTM/slow tests are excluded so the serve path is exercised
-        # without TensorFlow.
-        run: pytest -q -m "not research and not slow" --cov=volforecast --cov-report=term --cov-fail-under=85
+        # without TensorFlow. The 85% gate is enforced by the coverage config.
+        run: >-
+          pytest -q -m "not research and not slow"
+          --cov=volforecast --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
