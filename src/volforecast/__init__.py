@@ -62,7 +62,10 @@ from volforecast.data import (
 )
 from volforecast.evaluation.dsr import (
     deflated_sharpe_ratio,
+    effective_n_trials,
+    expected_sharpe_variance,
     probabilistic_sharpe_ratio,
+    variance_of_trial_sharpes,
 )
 from volforecast.evaluation.qlike import mse, qlike, qlike_loss_series
 from volforecast.evaluation.tests import (
@@ -179,12 +182,15 @@ __all__ = [
     "deflated_sharpe_ratio",
     "derive_verdict",
     "diebold_mariano",
+    "effective_n_trials",
+    "expected_sharpe_variance",
     "hansen_spa",
     "mse",
     "newey_west_lrv",
     "probabilistic_sharpe_ratio",
     "qlike",
     "qlike_loss_series",
+    "variance_of_trial_sharpes",
     # backtest overlay
     "FixedBpsCost",
     "OverlayResult",
